@@ -1,0 +1,103 @@
+.time-display {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+    text-align: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.logs {
+    height: 200px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 5px;
+    font-family: monospace;
+}
+
+.log-entry {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 3px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.log-entry.success {
+    background-color: rgba(5, 150, 105, 0.1);
+    color: #059669;
+    border-left: 3px solid #059669;
+}
+
+.log-entry.error {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border-left: 3px solid #dc2626;
+}
+
+.log-entry.info {
+    background-color: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    border-left: 3px solid #6366f1;
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn {
+    font-weight: bold;
+}
+
+.container-selection {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.container-selection h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.container-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.container-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.container-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.container-item input[type="checkbox"] {
+    margin-right: 0.75rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: var(--accent);
+}
+
+.container-item label {
+    color: var(--text-primary);
+    margin: 0;
+    cursor: pointer;
+    flex: 1;
+}
