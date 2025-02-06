@@ -96,12 +96,33 @@
         }
 
         .form-control {
+            width: 100%;
             background: var(--primary-bg);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
             padding: 0.75rem;
             border-radius: 8px;
             font-size: 0.95rem;
+        }
+
+        /* Style the calendar icon for datetime input */
+        input[type="datetime-local"] {
+            color-scheme: dark;
+            position: relative;
+            cursor: pointer;
+        }
+
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            background-color: var(--text-secondary);
+            padding: 0.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
         }
 
         .form-control:focus {
