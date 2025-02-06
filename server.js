@@ -9,6 +9,16 @@ const app = express();
 const wsInstance = expressWs(app);
 const port = 3000;
 
+// Utility function to execute commands with Promise
+const execPromise = (command) => {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) reject(error);
+            else resolve(stdout);
+        });
+    });
+};
+
 // Basic authentication configuration
 app.use(basicAuth({
     users: auth.users,
@@ -43,21 +53,16 @@ app.ws('/ws', (ws, req) => {
 });
 
 // Set system time
-app.post('/setTime', (req, res) => {
+app.post('/setTime', async (req, res) => {
     const { datetime, containers = [] } = req.body;
     console.log(datetime);
-    // Set system time
-    exec(`sudo date -s "${datetime}"`, async (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error setting time: ${error}`);
-            wsInstance.getWss().clients.forEach(client => {
-                client.send(JSON.stringify({
-                    type: 'error',
-                    data: `Failed to set time: ${error}`
-                }));
-            });
-            return res.status(500).json({ error: 'Failed to set time' });
-        }
+
+    try {
+        // Stop time synchronization
+        await execPromise('sudo timedatectl set-ntp false');
+        
+        // Set system time
+        await execPromise(`sudo date -s "${datetime}"`);
 
         // Notify time change success
         wsInstance.getWss().clients.forEach(client => {
@@ -72,15 +77,9 @@ app.post('/setTime', (req, res) => {
 
         // Only restart containers if any were selected
         if (containers.length > 0) {
-            // Start container restarts asynchronously
             for (const container of containers) {
                 try {
-                    await new Promise((resolve, reject) => {
-                        exec(`docker restart ${container}`, (error, stdout, stderr) => {
-                            if (error) reject(error);
-                            else resolve(stdout);
-                        });
-                    });
+                    await execPromise(`docker restart ${container}`);
                     
                     // Broadcast each container restart immediately
                     wsInstance.getWss().clients.forEach(client => {
@@ -99,24 +98,31 @@ app.post('/setTime', (req, res) => {
                 }
             }
         }
-    });
+    } catch (error) {
+        console.error(`Error setting time: ${error}`);
+        wsInstance.getWss().clients.forEach(client => {
+            client.send(JSON.stringify({
+                type: 'error',
+                data: `Failed to set time: ${error}`
+            }));
+        });
+        return res.status(500).json({ error: 'Failed to set time' });
+    }
 });
 
 // Reset to current time
-app.post('/resetTime', (req, res) => {
+app.post('/resetTime', async (req, res) => {
     const { containers = [] } = req.body;
-    // Get current time from NTP server and set it
-    exec('sudo date -s "$(curl -s --head http://google.com | grep ^Date: | sed "s/Date: //g")"', async (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error resetting time: ${error}`);
-            wsInstance.getWss().clients.forEach(client => {
-                client.send(JSON.stringify({
-                    type: 'error',
-                    data: `Failed to reset time: ${error}`
-                }));
-            });
-            return res.status(500).json({ error: 'Failed to reset time' });
-        }
+    
+    try {
+        // Enable time synchronization and sync
+        await execPromise('sudo timedatectl set-ntp true');
+        
+        // Wait a moment for the time to sync
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Force time sync
+        await execPromise('sudo systemctl restart systemd-timesyncd');
 
         // Notify time reset success
         wsInstance.getWss().clients.forEach(client => {
@@ -131,15 +137,9 @@ app.post('/resetTime', (req, res) => {
 
         // Only restart containers if any were selected
         if (containers.length > 0) {
-            // Start container restarts asynchronously
             for (const container of containers) {
                 try {
-                    await new Promise((resolve, reject) => {
-                        exec(`docker restart ${container}`, (error, stdout, stderr) => {
-                            if (error) reject(error);
-                            else resolve(stdout);
-                        });
-                    });
+                    await execPromise(`docker restart ${container}`);
                     
                     // Broadcast each container restart immediately
                     wsInstance.getWss().clients.forEach(client => {
@@ -158,7 +158,16 @@ app.post('/resetTime', (req, res) => {
                 }
             }
         }
-    });
+    } catch (error) {
+        console.error(`Error resetting time: ${error}`);
+        wsInstance.getWss().clients.forEach(client => {
+            client.send(JSON.stringify({
+                type: 'error',
+                data: `Failed to reset time: ${error}`
+            }));
+        });
+        return res.status(500).json({ error: 'Failed to reset time' });
+    }
 });
 
 app.listen(port, () => {
