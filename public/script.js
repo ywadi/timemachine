@@ -68,11 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const selectedContainers = getSelectedContainers();
-        if (selectedContainers.length === 0) {
-            addLog('Please select at least one container to restart', 'error');
-            return;
-        }
-
         try {
             const response = await fetch('/setTime', {
                 method: 'POST',
@@ -96,11 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     resetTimeButton.addEventListener('click', async () => {
         const selectedContainers = getSelectedContainers();
-        if (selectedContainers.length === 0) {
-            addLog('Please select at least one container to restart', 'error');
-            return;
-        }
-
         try {
             const response = await fetch('/resetTime', {
                 method: 'POST',

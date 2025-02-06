@@ -44,7 +44,7 @@ app.ws('/ws', (ws, req) => {
 
 // Set system time
 app.post('/setTime', (req, res) => {
-    const { datetime, containers } = req.body;
+    const { datetime, containers = [] } = req.body;
     console.log(datetime);
     // Set system time
     exec(`sudo date -s "${datetime}"`, async (error, stdout, stderr) => {
@@ -70,30 +70,33 @@ app.post('/setTime', (req, res) => {
         // Send success response immediately
         res.json({ success: true });
 
-        // Start container restarts asynchronously
-        for (const container of containers) {
-            try {
-                await new Promise((resolve, reject) => {
-                    exec(`docker restart ${container}`, (error, stdout, stderr) => {
-                        if (error) reject(error);
-                        else resolve(stdout);
+        // Only restart containers if any were selected
+        if (containers.length > 0) {
+            // Start container restarts asynchronously
+            for (const container of containers) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        exec(`docker restart ${container}`, (error, stdout, stderr) => {
+                            if (error) reject(error);
+                            else resolve(stdout);
+                        });
                     });
-                });
-                
-                // Broadcast each container restart immediately
-                wsInstance.getWss().clients.forEach(client => {
-                    client.send(JSON.stringify({
-                        type: 'containerRestart',
-                        data: `Container "${container}" restarted successfully`
-                    }));
-                });
-            } catch (error) {
-                wsInstance.getWss().clients.forEach(client => {
-                    client.send(JSON.stringify({
-                        type: 'error',
-                        data: `Failed to restart container "${container}": ${error}`
-                    }));
-                });
+                    
+                    // Broadcast each container restart immediately
+                    wsInstance.getWss().clients.forEach(client => {
+                        client.send(JSON.stringify({
+                            type: 'containerRestart',
+                            data: `Container "${container}" restarted successfully`
+                        }));
+                    });
+                } catch (error) {
+                    wsInstance.getWss().clients.forEach(client => {
+                        client.send(JSON.stringify({
+                            type: 'error',
+                            data: `Failed to restart container "${container}": ${error}`
+                        }));
+                    });
+                }
             }
         }
     });
@@ -101,7 +104,7 @@ app.post('/setTime', (req, res) => {
 
 // Reset to current time
 app.post('/resetTime', (req, res) => {
-    const { containers } = req.body;
+    const { containers = [] } = req.body;
     // Get current time from NTP server and set it
     exec('sudo date -s "$(curl -s --head http://google.com | grep ^Date: | sed "s/Date: //g")"', async (error, stdout, stderr) => {
         if (error) {
@@ -126,30 +129,33 @@ app.post('/resetTime', (req, res) => {
         // Send success response immediately
         res.json({ success: true });
 
-        // Start container restarts asynchronously
-        for (const container of containers) {
-            try {
-                await new Promise((resolve, reject) => {
-                    exec(`docker restart ${container}`, (error, stdout, stderr) => {
-                        if (error) reject(error);
-                        else resolve(stdout);
+        // Only restart containers if any were selected
+        if (containers.length > 0) {
+            // Start container restarts asynchronously
+            for (const container of containers) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        exec(`docker restart ${container}`, (error, stdout, stderr) => {
+                            if (error) reject(error);
+                            else resolve(stdout);
+                        });
                     });
-                });
-                
-                // Broadcast each container restart immediately
-                wsInstance.getWss().clients.forEach(client => {
-                    client.send(JSON.stringify({
-                        type: 'containerRestart',
-                        data: `Container "${container}" restarted successfully`
-                    }));
-                });
-            } catch (error) {
-                wsInstance.getWss().clients.forEach(client => {
-                    client.send(JSON.stringify({
-                        type: 'error',
-                        data: `Failed to restart container "${container}": ${error}`
-                    }));
-                });
+                    
+                    // Broadcast each container restart immediately
+                    wsInstance.getWss().clients.forEach(client => {
+                        client.send(JSON.stringify({
+                            type: 'containerRestart',
+                            data: `Container "${container}" restarted successfully`
+                        }));
+                    });
+                } catch (error) {
+                    wsInstance.getWss().clients.forEach(client => {
+                        client.send(JSON.stringify({
+                            type: 'error',
+                            data: `Failed to restart container "${container}": ${error}`
+                        }));
+                    });
+                }
             }
         }
     });
